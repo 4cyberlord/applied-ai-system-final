@@ -14,7 +14,7 @@ See [Mermaid source](diagrams/architecture.mmd). The parser extracts supported p
 
 ## Setup
 
-Use Python 3.9+ from the repository root. No API keys or network services are needed.
+Use Python 3.10+ from the repository root. No API keys or network services are needed.
 
 ```bash
 python -m venv .venv
@@ -28,23 +28,32 @@ Use --mode balanced, genre-first, mood-first or energy-focused; add --diversity 
 
 ## Sample interactions
 
-These are expected excerpts derived from the committed algorithm, pending actual Python execution. Full output includes the loaded count and explanations.
+Actual captured Python application output (successful examples exit 0):
 
 ```text
 Input: python -m src.applied "happy pop high energy" --k 1
-Expected: Sunrise City | 4.330
+Loaded songs: 20
+Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.9}
+Rank | Song         | Artist    | Score | Reasons
+-----+--------------+-----------+-------+----------------------------------------------------------------------
+1    | Sunrise City | Neon Echo | 3.920 | genre match (+2.000); mood match (+1.000); energy similarity (+0.920)
 Reliability: PASS (1 checked; attempts: 1)
 ```
 
 ```text
 Input: python -m src.applied "chill lofi acoustic" --k 1
-Expected: Library Rain | 3.430
+Loaded songs: 20
+Preferences: {'genre': 'lofi', 'mood': 'chill', 'likes_acoustic': True}
+Rank | Song         | Artist         | Score | Reasons
+-----+--------------+----------------+-------+------------------------------------------------------------------------
+1    | Library Rain | Paper Lanterns | 3.430 | genre match (+2.000); mood match (+1.000); acoustic preference (+0.430)
 Reliability: PASS (1 checked; attempts: 1)
 ```
 
 ```text
 Input: python -m src.applied "pop rock"
-Expected: Error: Choose one genre and one mood per request.
+Loaded songs: 20
+Error: Choose one genre and one mood per request.
 Exit status: 1
 ```
 
@@ -54,7 +63,7 @@ The advanced feature required by the assignment is the integrated reliability/te
 
 ## Testing summary
 
-The inherited tests and new parameterized tests cover preference extraction, invalid requests, four modes with and without diversity, fault recovery, wrong rankings, altered scores and explanations, and command entry behavior. See [evaluation notes](evaluation/test_results.md) for actual verification status. Do not interpret a reliability PASS as a probability of listener satisfaction.
+The inherited tests and new parameterized tests cover preference extraction, invalid requests, four modes with and without diversity, fault recovery, wrong rankings, altered scores and explanations, and command entry behavior. All 44 automated tests passed. Fault injection confirmed recovery and fail-closed behavior. See [evaluation notes](evaluation/test_results.md) for actual execution evidence. Do not interpret a reliability PASS as a probability of listener satisfaction.
 
 ## Reflection
 
