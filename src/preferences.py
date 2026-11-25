@@ -34,9 +34,13 @@ def parse_preferences(query):
         raise ValueError("Choose a single energy level.")
     if energies:
         prefs["energy"] = energies.pop()
-    if re.search(r"\bnon[- ]acoustic\b", text):
+    non_acoustic = re.search(r"\bnon[- ]acoustic\b", text)
+    acoustic = re.search(r"\bacoustic\b", re.sub(r"\bnon[- ]acoustic\b", "", text))
+    if non_acoustic and acoustic:
+        raise ValueError("Choose a single acoustic preference.")
+    if non_acoustic:
         prefs["likes_acoustic"] = False
-    elif re.search(r"\bacoustic\b", text):
+    elif acoustic:
         prefs["likes_acoustic"] = True
     if not prefs:
         raise ValueError("Specify a supported genre, mood, energy level or acoustic preference.")
