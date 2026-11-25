@@ -74,3 +74,38 @@ def test_invalid_k(catalog):
 def test_empty_catalog():
     with pytest.raises(ValueError):
         recommend("pop", [])
+
+
+def test_conflicting_acoustic():
+    with pytest.raises(ValueError, match="single acoustic"):
+        parse_preferences("pop acoustic non-acoustic")
+
+def test_mutating_ranker(catalog):
+    original_title = catalog[0]["title"]
+    def faulty(prefs, songs, k, mode, diversity):
+        prefs["genre"] = "metal"
+        songs[0]["title"] = "Invented track"
+        return recommend_songs(prefs, songs, k, mode, diversity)
+    result = recommend("happy pop", catalog, ranker=faulty)
+    assert result["attempts"] == 2
+    assert result["preferences"]["genre"] == "pop"
+    assert result["results"][0][0]["title"] == original_title
+    assert catalog[0]["title"] == original_title
+
+def test_retry_fails_closed(catalog, monkeypatch):
+    import src.agent as agent
+    def faulty(*args):
+        return []
+    monkeypatch.setattr(agent, "recommend_songs", faulty)
+    with pytest.raises(RuntimeError, match="no results released"):
+        recommend("pop", catalog, ranker=faulty)
+
+def test_duplicate_or_nonfinite_results(catalog):
+    prefs = parse_preferences("happy pop")
+    results = recommend_songs(prefs, catalog, 5)
+    s, v, reason = results[0]
+    results[0] = (s, float("nan"), reason)
+    results[1] = results[0]
+    report = evaluate(prefs, catalog, results, 5)
+    assert "invalid score" in report["errors"]
+    assert "unknown, altered or duplicate song" in report["errors"]
