@@ -1,0 +1,18 @@
+flowchart TD
+    U[Listener request] --> P[Bounded preference parser]
+    P -->|Valid preferences| R[Catalog retriever]
+    P -->|Invalid or ambiguous| E[Safe error]
+    C[(Local songs CSV)] --> R
+    R --> A[Weighted ranking and optional diversity]
+    A --> V[Runtime reliability evaluator]
+    C --> V
+    V -->|Pass| O[Grounded ranked songs and reasons]
+    V -->|Fail once| F[Trusted ranker retry]
+    F --> V2[Second evaluation]
+    V2 -->|Pass| O
+    V2 -->|Fail| E
+    V --> L[Diagnostic logs]
+    V2 --> L
+    T[Automated regression and fault injection tests] -.-> P
+    T -.-> V
+    H[Human review of relevance and limitations] -.-> O
