@@ -1,5 +1,6 @@
 """Plan, retrieve, rank, verify and retry once before releasing recommendations."""
 import logging
+from copy import deepcopy
 from .preferences import parse_preferences
 from .retriever import retrieve
 from .recommender import recommend_songs, MODES
@@ -16,13 +17,14 @@ def recommend(query, catalog, k=5, mode="balanced", diversity=False, ranker=reco
     prefs = parse_preferences(query)
     if not catalog or len({s["id"] for s in catalog}) != len(catalog):
         raise ValueError("Catalog is empty or contains duplicate IDs.")
-    candidates = retrieve(prefs, catalog, mode)
+    trusted_catalog = deepcopy(catalog)
+    candidates = retrieve(prefs, trusted_catalog, mode)
     LOG.info("Retrieved %d candidates", len(candidates))
     for attempt in (1, 2):
         try:
-            results = (ranker if attempt == 1 else recommend_songs)(prefs, candidates, k, mode, diversity)
-            report = evaluate(prefs, catalog, results, k, mode, diversity)
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+            results = (ranker if attempt == 1 else recommend_songs)(dict(prefs), deepcopy(candidates), k, mode, diversity)
+            report = evaluate(prefs, trusted_catalog, results, k, mode, diversity)
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError, ArithmeticError, RuntimeError):
             report = {"passed": False, "errors": ["malformed ranking"], "checked": 0}
         LOG.info("Evaluation attempt %d: %s", attempt, "pass" if report["passed"] else "fail")
         if report["passed"]:
